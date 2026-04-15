@@ -27,8 +27,13 @@ async def filter_new(
     if not articles:
         return []
 
+    # Filter out articles without a URL first
+    articles_with_url = [a for a in articles if a.get("source_url")]
+    if not articles_with_url:
+        return []
+
     # Batch check Redis first (fast path)
-    hashes = [_url_hash(a["source_url"]) for a in articles if a.get("source_url")]
+    hashes = [_url_hash(a["source_url"]) for a in articles_with_url]
     pipe = redis.pipeline()
     for h in hashes:
         pipe.sismember(REDIS_KEY, h)
@@ -36,8 +41,8 @@ async def filter_new(
 
     new_articles = []
     new_hashes = []
-    for art, seen in zip(articles, results):
-        if not seen and art.get("source_url"):
+    for art, seen in zip(articles_with_url, results):
+        if not seen:
             new_articles.append(art)
             new_hashes.append(_url_hash(art["source_url"]))
 
@@ -58,5 +63,5 @@ async def filter_new(
         pipe.expire(REDIS_KEY, TTL_SECONDS)
         await pipe.execute()
 
-    logger.info(f"Deduplicator: {len(articles)} in → {len(new_articles)} new")
+    logger.info(f"Deduplicator: {len(articles_with_url)} in → {len(new_articles)} new")
     return new_articles
