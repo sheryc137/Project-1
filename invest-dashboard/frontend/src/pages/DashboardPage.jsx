@@ -8,6 +8,7 @@ import RiskMeter from '../components/analysis/RiskMeter';
 import AnalysisCard from '../components/analysis/AnalysisCard';
 import AllocationPie from '../components/portfolio/AllocationPie';
 import NewsCard from '../components/news/NewsCard';
+import GlobeWidget from '../components/dashboard/GlobeWidget';
 import Spinner from '../components/common/Spinner';
 import toast from 'react-hot-toast';
 
@@ -154,8 +155,12 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Right column: allocation + alerts */}
+        {/* Right column: globe + allocation + alerts */}
         <div className="space-y-4">
+          <GlobeWidget
+            riskLevel={analysis?.market_risk_level || 'LOW'}
+            articleCount={newsData?.total || 0}
+          />
           <AllocationPie positions={positions} />
 
           {alertsData?.items?.length > 0 && (
